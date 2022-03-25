@@ -16,15 +16,18 @@ class ShareLinks {
 
 
   constructor(options) {
-    this.localOptions = options;
-    if (options && isObject(options)) {
+    if (options && typeof options === 'object') {
       Object.entries(this.defaultOptions).forEach(([option, value]) => {
-        this.localOptions[option] = value;
-      })
+        this.localOptions[option] = options[option] == null ? value : options[option];
+      });
     } else {
       this.localOptions = { ...this.defaultOptions };
     }
 
+    this.mount();
+  }
+
+  mount() {
     const utmStaticEntries = Object.entries(this.localOptions.UTM_STATIC_DATA);
     const searchParams = new URLSearchParams(location.search);
     
