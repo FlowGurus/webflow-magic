@@ -1,4 +1,4 @@
-class ShareLinks {
+class WebflowMagic_ShareLinks {
   localOptions = {}
   defaultOptions = {
     LINK_CLASS: 'share-link',

@@ -1,4 +1,4 @@
-class WebflowMagicTOC {
+class WebflowMagic_TableOfContents {
   localOptions = {}
   defaultOptions = {
     TOC_ELEMENT_SELECTOR: '#toc',
