@@ -2,11 +2,13 @@ class WebflowMagic_TableOfContents {
   localOptions = {}
   defaultOptions = {
     TOC_ELEMENT_SELECTOR: '#toc',
+    TOC_WRAP_ELEMENT_SELECTOR: '.table-of-contents',
     TOC_LIST_TAG: 'ol',
     TOC_LIST_ITEM_CLASSLIST: '',
     HEADING_ELEMENTS_SELECTOR: 'h2,h3,h4,h5,h6',
     CONTENT_ELEMENTS_SELECTOR: '.w-richtext',
 
+    SHOW_TOC_WRAP_WHEN_NO_HEADINGS: false,
     HIDE_REGEX: /.*-\s*$/, // Headings with - at the end will be hidden from TOC
     HIDE_REPLACE_REGEX: /(.*)-\s*$/gm,
     HIDE_REPLACE_WITH: '$1',
@@ -36,6 +38,9 @@ class WebflowMagic_TableOfContents {
       headingNodes = document.querySelectorAll(headingSelector),
       parentLevel = 0,
       currentNode = TOC;
+    if (headingNodes.length === 0 && !this.localOptions.SHOW_TOC_WRAP_WHEN_NO_HEADINGS) {
+      document.querySelector(this.localOptions.TOC_WRAP_ELEMENT_SELECTOR).style.display = 'none';
+    }
     for (let i = 0, len = headingNodes.length; i < len; ++i) {
       let currentHeadingNode = headingNodes[i];
       let textContent = currentHeadingNode.textContent;
