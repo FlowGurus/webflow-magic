@@ -29,10 +29,11 @@ class WebflowMagic_AutoFill {
 
       if (this.localOptions.HIDE_QUERY_PARAMS) {
         linkNodes.forEach(el => {
-          el.addEventListener('click', (event) => {
+          const clickHandler = () => {
             const params = this.getItemParams(itemNode);
             localStorage.setItem(`${this.localOptions.ATTRIBUTE_PREFIX}data`, JSON.stringify(params));
-          });
+          }
+          el.addEventListener('mousedown', clickHandler);
         });
       } else {
         const params = this.getItemParams(itemNode, this.localOptions.QUERY_PARAM_PREFIX);
