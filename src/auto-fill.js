@@ -76,7 +76,8 @@ class WebflowMagic_AutoFill {
       return;
     }
     paramNodes.forEach((el) => {
-      const value = el?.textContent?.trim();
+      const attributeName = el.attributes[`${this.localOptions.ATTRIBUTE_PREFIX}attribute`]?.value
+      const value = attributeName ? el.attributes[attributeName]?.value : el?.textContent?.trim();
       const name = el.attributes[`${this.localOptions.ATTRIBUTE_PREFIX}text`]?.value?.trim();
       if (name) params[namePrefix+name] = value;
     });
