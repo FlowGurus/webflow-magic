@@ -27,13 +27,27 @@ class WebflowMagic_AutoFill {
         return;
       }
 
+      const paramInputNodes = this.getItemInputNodes(itemNode);
+      paramInputNodes.forEach(el => {
+        el.addEventListener('keypress', (event) => {
+          const key = event.charCode || event.keyCode || 0;     
+          if (key === 13) event.preventDefault();
+        });
+      });
+
       if (this.localOptions.HIDE_QUERY_PARAMS) {
         linkNodes.forEach(el => {
-          const clickHandler = () => {
+          const clickHandler = (event) => {
+            if (event.buttons === 1) return; // skip mousedown when normal click
             const params = this.getItemParams(itemNode);
             localStorage.setItem(`${this.localOptions.ATTRIBUTE_PREFIX}data`, JSON.stringify(params));
+            
+            paramInputNodes.forEach(el => {
+              if (!el.validity.valid) event.preventDefault();
+            });            
           }
           el.addEventListener('mousedown', clickHandler);
+          el.addEventListener('click', clickHandler);
         });
       } else {
         const params = this.getItemParams(itemNode, this.localOptions.QUERY_PARAM_PREFIX);
@@ -76,12 +90,20 @@ class WebflowMagic_AutoFill {
       return;
     }
     paramNodes.forEach((el) => {
-      const attributeName = el.attributes[`${this.localOptions.ATTRIBUTE_PREFIX}attribute`]?.value
-      const value = attributeName ? el.attributes[attributeName]?.value : el?.textContent?.trim();
+      const attributeName = el.attributes[`${this.localOptions.ATTRIBUTE_PREFIX}attribute`]?.value;
+      const value = attributeName 
+        ? el.attributes[attributeName]?.value
+        : (el?.tagName?.toLowerCase() === 'input')
+          ? el?.value?.trim()
+          : el?.textContent?.trim()
+      ;
       const name = el.attributes[`${this.localOptions.ATTRIBUTE_PREFIX}text`]?.value?.trim();
       if (name) params[namePrefix+name] = value;
     });
     return params;
+  }
+  getItemInputNodes(itemNode) {
+    return itemNode.querySelectorAll(`[${this.localOptions.ATTRIBUTE_PREFIX}text][name]`);
   }
 
   setFormFieldValue(formNode, fieldName, value) {
