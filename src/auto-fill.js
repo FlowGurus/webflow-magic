@@ -107,8 +107,8 @@ class WebflowMagic_AutoFill {
   }
 
   setFormFieldValue(formNode, fieldName, value) {
-    // for now only textareas and input type=text|hidden is supported
-    let inputNode = formNode.querySelector(`textarea[name=${fieldName}],input[type=text][name=${fieldName}],input[type=hidden][name=${fieldName}]`);
+    // for now only textareas and input type=text|email|tel|hidden is supported
+    let inputNode = formNode.querySelector(`textarea[name=${fieldName}],input[type=text][name=${fieldName}],input[type=email][name=${fieldName}],input[type=tel][name=${fieldName}],input[type=hidden][name=${fieldName}]`);
     if (inputNode == null) {
       inputNode = document.createElement('input');
       inputNode.type = 'hidden';
