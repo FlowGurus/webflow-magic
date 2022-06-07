@@ -19,8 +19,7 @@ class WebflowMagic_AutoFill {
   }
 
   mount() {
-
-    document.querySelectorAll(`[${this.localOptions.ATTRIBUTE_PREFIX}element=item`).forEach((itemNode) => {
+    document.querySelectorAll(`[${this.localOptions.ATTRIBUTE_PREFIX}element=item]`).forEach((itemNode) => {
       const linkNodes = itemNode.querySelectorAll(`[${this.localOptions.ATTRIBUTE_PREFIX}element=link]`);
       if (linkNodes.length === 0) {
         console.warn(`No elements with attribute "${this.localOptions.ATTRIBUTE_PREFIX}element"="link" was found inside item`, itemNode);
