@@ -19,34 +19,56 @@ class WebflowMagic_AutoFill {
   }
 
   mount() {
+    // loop thru magic-autofill-element="item" nodes
     document.querySelectorAll(`[${this.localOptions.ATTRIBUTE_PREFIX}element=item]`).forEach((itemNode) => {
+      // find magic-autofill-element="link" nodes
       const linkNodes = itemNode.querySelectorAll(`[${this.localOptions.ATTRIBUTE_PREFIX}element=link]`);
       if (linkNodes.length === 0) {
         console.warn(`No elements with attribute "${this.localOptions.ATTRIBUTE_PREFIX}element"="link" was found inside item`, itemNode);
         return;
       }
-
+      // find inputs for params (magic-autofill-text="some_param_name")
       const paramInputNodes = this.getItemInputNodes(itemNode);
       paramInputNodes.forEach(el => {
+        // prevent that inputs from submitting the form by Enter keypress
         el.addEventListener('keypress', (event) => {
           const key = event.charCode || event.keyCode || 0;     
           if (key === 13) event.preventDefault();
         });
       });
 
+      // draft concept: submit form if there's one inside the item when magic-autofill-submit="true"
+      const submitForm = (document.querySelector(`[${this.localOptions.ATTRIBUTE_PREFIX}submit]`)?.attributes[`${this.localOptions.ATTRIBUTE_PREFIX}submit`]?.value === 'true');
+      
       if (this.localOptions.HIDE_QUERY_PARAMS) {
-        linkNodes.forEach(el => {
+        // add click handlers for link nodes
+        linkNodes.forEach(linkNode => {
           const clickHandler = (event) => {
             if (event.buttons === 1) return; // skip mousedown when normal click
             const params = this.getItemParams(itemNode);
             localStorage.setItem(`${this.localOptions.ATTRIBUTE_PREFIX}data`, JSON.stringify(params));
             
-            paramInputNodes.forEach(el => {
-              if (!el.validity.valid) event.preventDefault();
+            paramInputNodes.forEach(inputNode => {
+              if (!inputNode.validity.valid) event.preventDefault();
+              else if (submitForm) {
+                const formNode = inputNode.closest('form');
+                if (formNode) {
+                  if (formNode.action) {
+                    event.preventDefault();
+                    // draft concept: submit form
+                    fetch(formNode.action, { mode: 'no-cors', method: formNode.method, body: new URLSearchParams(new FormData(formNode)) })
+                    .then(() => {
+                      if (event.type === 'click') {
+                        location.href = linkNode.href;
+                      }
+                    });
+                  }
+                }
+              }
             });            
           }
-          el.addEventListener('mousedown', clickHandler);
-          el.addEventListener('click', clickHandler);
+          linkNode.addEventListener('mousedown', clickHandler);
+          linkNode.addEventListener('click', clickHandler);
         });
       } else {
         const params = this.getItemParams(itemNode, this.localOptions.QUERY_PARAM_PREFIX);
