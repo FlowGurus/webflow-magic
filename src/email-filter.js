@@ -3,7 +3,7 @@ class WebflowMagic_EmailFilter {
   defaultOptions = {
     BLACKLISTED_DOMAINS: 'gmail.com|yahoo.com|hotmail.com',
     EMAIL_INPUT_SELECTOR: '[type=email]',
-    ERROR_MESSAGE: 'Please enter busyness email',
+    ERROR_MESSAGE: 'Please enter business email',
   }
 
   constructor(options) {
