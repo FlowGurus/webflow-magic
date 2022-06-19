@@ -31,8 +31,8 @@ class WebflowMagic_CollectionAnchors {
       containerEl.querySelectorAll(this.localOptions.ITEM_SELECTOR).forEach(itemEl => {
         const slug = this.slugify(itemEl.querySelector(this.localOptions.ITEM_SLUG_SELECTOR)?.textContent ?? itemEl.textContent);
         const anchorEl = itemEl.querySelector('a');
+        if (!anchorEl) console.warn('Link container does not contain link to assign anchor!')
         this.pillSlugList.push(slug);
-
         this.setlinkUrl(anchorEl, `#${slug}`);
       });
     });
@@ -57,7 +57,6 @@ new WM_CollectionAnchors({ ITEM_TEXT_SELECTOR: '.some-selector-here', ... });`);
         anchorEl.style.position = 'absolute';
         
         if (!slug) {
-          console.warn('ass');
           return;
         }
         this.cardSlugList.push(slug);
