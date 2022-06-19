@@ -111,9 +111,9 @@ class WebflowMagic_AutoFill {
       return;
     }
     paramNodes.forEach((el) => {
-      const attributeName = el.attributes[`${this.localOptions.ATTRIBUTE_PREFIX}attribute`]?.value;
+      const attributeName = el.getAttribute(`${this.localOptions.ATTRIBUTE_PREFIX}attribute`);
       const value = (attributeName) 
-        ? el.attributes[attributeName]?.value ?? el[attributeName]
+        ? el.getAttribute(attributeName)
         : (el?.tagName?.toLowerCase() === 'input')
           ? el?.value
           : el?.textContent?.trim()
