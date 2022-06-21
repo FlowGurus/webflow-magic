@@ -1,3 +1,4 @@
+// OBSOLETE! use cms-anchor-links instead
 class WebflowMagic_CollectionAnchors {
   localOptions = {}
   defaultOptions = {
