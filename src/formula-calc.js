@@ -26,7 +26,7 @@ class WebflowMagic_FormulaCalc {
       });
     });
   
-    this.fillVarElements(this.calculateVars());
+    this.fillVarElements(this.calculateVars(true));
   }
 
   fillVarElements(calcData) {
@@ -36,20 +36,21 @@ class WebflowMagic_FormulaCalc {
     });
   }
 
-  calculateVars() {
-    let calcData = this.getCalcData();
+  calculateVars(initial=false) {
+    let localCalcData = this.getCalcData();
     const defaultCalcData = this.localOptions.DEFAULT_DATA;
 
     if (defaultCalcData && typeof defaultCalcData === 'object') {
       Object.entries(defaultCalcData).forEach(([varName, value]) => {
-        if (!calcData.hasOwnProperty(varName)) {
-          calcData[varName] = defaultCalcData[varName];
+        if (!localCalcData.hasOwnProperty(varName) || ( initial && localCalcData[varName] === '' )) {
+          localCalcData[varName] = defaultCalcData[varName];
         }
       });
     }
-    calcData = this.localOptions.CALC_FUNCTION(calcData);
+
+    localCalcData = this.localOptions.CALC_FUNCTION(localCalcData);
     
-    return calcData;
+    return localCalcData;
   }
 
   getCalcData() {
