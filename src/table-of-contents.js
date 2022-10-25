@@ -7,6 +7,10 @@ class WebflowMagic_TableOfContents {
     TOC_LIST_ITEM_CLASSLIST: '',
     HEADING_ELEMENTS_SELECTOR: 'h2,h3,h4,h5,h6',
     CONTENT_ELEMENTS_SELECTOR: '.w-richtext',
+    TOP_OFFSET: null,
+
+    ANCHOR_CLASSNAME: 'toc-anchor',
+    LINK_LIST_CLASSNAME: 'toc-gen',
 
     SHOW_TOC_WRAP_WHEN_NO_HEADINGS: false,
     HIDE_REGEX: /.*-\s*$/, // Headings with - at the end will be hidden from TOC
@@ -33,14 +37,15 @@ class WebflowMagic_TableOfContents {
   }
 
   mount() {
-    let TOC = document.querySelector(this.localOptions.TOC_ELEMENT_SELECTOR),
-      headingSelector = this.localOptions.HEADING_ELEMENTS_SELECTOR.split(",").map(el => `${this.localOptions.CONTENT_ELEMENTS_SELECTOR} ${el}`).join(","),
-      headingNodes = document.querySelectorAll(headingSelector),
-      parentLevel = 0,
-      currentNode = TOC;
+    const TOCRootNode = document.querySelector(this.localOptions.TOC_ELEMENT_SELECTOR);
+    const headingSelector = this.localOptions.HEADING_ELEMENTS_SELECTOR
+      .split(",").map(el => `${this.localOptions.CONTENT_ELEMENTS_SELECTOR} ${el}`).join(",");
+    const headingNodes = document.querySelectorAll(headingSelector);
     if (headingNodes.length === 0 && !this.localOptions.SHOW_TOC_WRAP_WHEN_NO_HEADINGS) {
       document.querySelector(this.localOptions.TOC_WRAP_ELEMENT_SELECTOR).style.display = 'none';
     }
+    let parentLevel = 0,
+      currentNode = TOCRootNode;
     for (let i = 0, len = headingNodes.length; i < len; ++i) {
       let currentHeadingNode = headingNodes[i];
       let textContent = currentHeadingNode.textContent;
@@ -53,38 +58,50 @@ class WebflowMagic_TableOfContents {
       let diff = newLevel - parentLevel;
       if (parentLevel === 0 || diff > 0) {
         let containerLiNode = currentNode.lastChild || currentNode;
-        let ulNode = document.createElement(this.localOptions.TOC_LIST_TAG)
-        ulNode.className = "toc-gen";
+        let ulNode = document.createElement(this.localOptions.TOC_LIST_TAG);
+        ulNode.className = this.localOptions.LINK_LIST_CLASSNAME;
         containerLiNode.appendChild(ulNode);
         currentNode = ulNode;
         parentLevel = newLevel;
       }
       if (diff < 0) {
-        while (0 !== diff++) currentNode = currentNode.closest('.toc-gen');
+        while (0 !== diff) {
+          currentNode = currentNode.parentNode.closest('.' + this.localOptions.LINK_LIST_CLASSNAME);
+          diff++;
+        }
         parentLevel = newLevel;
       }
-      let id = this.formatTOCLinkSlug(textContent),
-        idx = 1;
-      while (true) {
-        if (!document.getElementById(id)) break;
-        id = this.formatTOCLinkSlug(`${textContent} ${idx}`);
-        idx++;
-      }
-      let liNode = document.createElement('LI');
+      const idValue = this.getFreeIdValue(textContent);
+      const listItemNode = document.createElement('LI');
+      listItemNode.classList = this.localOptions.TOC_LIST_ITEM_CLASSLIST;
       // if (!currentHeadingNode.hasAttribute('id')) currentHeadingNode.id = id;
-      let anchorNode = document.createElement('A');
-      anchorNode.id = id;
-      anchorNode.className = "toc-anchor";
+      const anchorNode = document.createElement('A');
+      anchorNode.id = idValue;
+      anchorNode.className = this.localOptions.ANCHOR_CLASSNAME;
+      if (this.localOptions.TOP_OFFSET) {
+        anchorNode.style.marginTop = `-${this.localOptions.TOP_OFFSET}`;
+        anchorNode.style.position = 'absolute';
+      }
       currentHeadingNode.parentElement.insertBefore(anchorNode, currentHeadingNode);
-      let link = document.createElement('A');
-      link.setAttribute('href', '#' + id);
-      link.appendChild(document.createTextNode(this.formatTOCLinkText(textContent)))
-      liNode.appendChild(link);
-      currentNode.appendChild(liNode);
+      const linkNode = document.createElement('A');
+      linkNode.setAttribute('href', '#' + idValue);
+      linkNode.appendChild(document.createTextNode(this.formatTOCLinkText(textContent)))
+      listItemNode.appendChild(linkNode);
+      currentNode.appendChild(listItemNode);
       this.processHeading(currentHeadingNode);
     }
   }
+  getFreeIdValue(textContent) {
+    let idValue = this.formatTOCLinkSlug(textContent),
+      nextFreeIdx = 1;
 
+    while (true) {
+      if (!document.getElementById(idValue)) break;
+      idValue = this.formatTOCLinkSlug(`${textContent} ${nextFreeIdx}`);
+      nextFreeIdx++;
+    }
+    return idValue;
+  }
   cleanupHeadingText(text) {
     text = text.replace(this.localOptions.HIDE_REPLACE_REGEX, this.localOptions.HIDE_REPLACE_WITH);
     text = text.replace(this.localOptions.CUSTOM_TITLE_REPLACE_REGEX, this.localOptions.CUSTOM_TITLE_REPLACE_WITH);
