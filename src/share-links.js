@@ -47,7 +47,7 @@ class WebflowMagic_ShareLinks {
 
       if (destinationType === 'clipboard') linkEl.addEventListener('click', (e) => {
         e.preventDefault();
-        this.copyTextToClipboard(url);
+        this.copyTextToClipboard(url.toString());
       });
       
       this.setlinkUrl(linkEl, this.getShareLink(destinationType, url.toString()));
@@ -94,7 +94,9 @@ class WebflowMagic_ShareLinks {
   copyTextToClipboard(text) {
     if (!navigator.clipboard) {
       this.fallbackCopyTextToClipboard(text);
-    } else navigator.clipboard.writeText(text);
+    } else {
+      navigator.clipboard.writeText(text);
+    }
   }
 }
 
