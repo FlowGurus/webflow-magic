@@ -32,68 +32,59 @@ class WebflowMagic_ShareLinks {
   }
 
   mount() {
-    const utmStaticEntries = Object.entries(this.localOptions.UTM_STATIC_DATA);
+    document.querySelectorAll(`[${this.localOptions.ATTRIBUTE_PREFIX}target]`).forEach(linkEl => this.processLinkEl(linkEl));
+    
+    // support of obsolete logic
+    document.querySelectorAll(`.${this.localOptions.LINK_CLASS}`).forEach(linkEl => this.processLinkEl(linkEl));
+  }
+  processLinkEl(linkEl) {
+    const url = new URL(`${location.origin}${location.pathname}`);
     const searchParams = new URLSearchParams(location.search);
+    const utmStaticEntries = Object.entries(this.localOptions.UTM_STATIC_DATA);
+    const destinationType = this.getDestinationType(linkEl);
     
     if (this.localOptions.ADD_UTM) {
       utmStaticEntries.forEach(([param, value]) => {
         searchParams.set(param, value);
       });
     }
-
-    const url = new URL(`${location.origin}${location.pathname}`);
-
+    if (this.localOptions.ADD_UTM && this.localOptions.SET_UTM_SOURCE) searchParams.set('utm_source', destinationType);
     
-    document.querySelectorAll(`[${this.localOptions.ATTRIBUTE_PREFIX}target]`).forEach(linkEl => {
-      const destinationType = linkEl.getAttribute(`${this.localOptions.ATTRIBUTE_PREFIX}target`);
-      
-      if (this.localOptions.ADD_UTM && this.localOptions.SET_UTM_SOURCE) searchParams.set('utm_source', destinationType);
-      
-      url.search = searchParams.toString();
+    url.search = searchParams.toString();
 
-      if (destinationType === 'clipboard') linkEl.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.copyTextToClipboard(url.toString());
-      });
-      
-      this.setlinkUrl(linkEl, this.getShareLink(destinationType, url.toString()));
-      if (this.localOptions.SET_TARGET_BLANK) linkEl.target = '_blank';
+    if (destinationType === 'clipboard') linkEl.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.copyTextToClipboard(url.toString());
     });
-    
-    // support of obsolete logic
-    document.querySelectorAll(`.${this.localOptions.LINK_CLASS}`).forEach(linkEl => {
-      const destinationType = this.getDestinationType(linkEl);
-      
-      if (this.localOptions.ADD_UTM && this.localOptions.SET_UTM_SOURCE) searchParams.set('utm_source', destinationType);
-      
-      url.search = searchParams.toString();
+    const urlString = this.generateShareLink(destinationType, url.toString())
 
-      if (destinationType === 'clipboard') linkEl.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.copyTextToClipboard(url.toString());
-      });
-      
-      this.setlinkUrl(linkEl, this.getShareLink(destinationType, url.toString()));
-      if (this.localOptions.SET_TARGET_BLANK) linkEl.target = '_blank';
-    });
+    if (urlString) {
+      this.setlinkUrl(linkEl, urlString);
+      if (this.localOptions.SET_TARGET_BLANK) linkEl.target = '_blank';  
+    }
   }
   setlinkUrl(linkEl, url) {
     linkEl.href = url;
   }
   getDestinationType(linkEl) {
+    const destinationType = linkEl.getAttribute(`${this.localOptions.ATTRIBUTE_PREFIX}target`);
+    if (destinationType) return destinationType;
+    // support of obsolete logic
     const classList = linkEl.classList;
     if (classList.contains(this.localOptions.LINK_CLASS_CLIPBOARD)) return 'clipboard';
     if (classList.contains(this.localOptions.LINK_CLASS_FACEBOOK)) return 'facebook';
     if (classList.contains(this.localOptions.LINK_CLASS_LINKEDIN)) return 'linkedin';
     if (classList.contains(this.localOptions.LINK_CLASS_TWITTER)) return 'twitter';
   }
-  getShareLink(destinationType, url, text='') {
+  generateShareLink(destinationType, url, text='') {
     switch (destinationType) {
       case 'clipboard': return 'javascript:;';
       case 'facebook': return `https://www.facebook.com/sharer/sharer.php?u=${url}`;
       case 'linkedin': return `https://www.linkedin.com/shareArticle?mini=true&url=${url}`;
       case 'twitter': return `https://twitter.com/intent/tweet?url=${url}&text=${text}`;
-      default: return;
+      default: 
+        console.error(`There is no rule for link generation defined for target '${destinationType}'`, linkEl);
+        return;
     }
   }
   fallbackCopyTextToClipboard(text) {
