@@ -9,7 +9,6 @@ class WebflowMagic_ShareLinks {
       utm_medium: 'share-link',
     },
     POPUP_TIMEOUT: 3000,
-    POPUP_ERROR_TEXT: "Unable to copy the link to clipboard",
     POPUP_PROMPT_TEXT: "You can copy the link over here",
     //obsolete options
     LINK_CLASS: 'share-link',
@@ -120,7 +119,7 @@ class WebflowMagic_ShareLinks {
   }
   copyTextToClipboard(text) {
     if (!navigator.clipboard) {
-      this.showPopup(this.fallbackCopyTextToClipboard(text) ? null : this.localOptions.POPUP_ERROR_TEXT);
+      this.showPopup(this.fallbackCopyTextToClipboard(text));
     } else {
       navigator.clipboard.writeText(text).then(() => {
         this.showPopup();
@@ -129,15 +128,15 @@ class WebflowMagic_ShareLinks {
           window.prompt(this.localOptions.POPUP_PROMPT_TEXT, text);
         } catch (ex) {
           console.error('Fallback: Oops, unable to copy', ex);
-          this.showPopup(this.localOptions.POPUP_ERROR_TEXT);
+          this.showPopup(false);
         }
       });
     }
   }
-  showPopup(error = null) {
-    const selector = (error) 
-      ? `[${this.localOptions.ATTRIBUTE_PREFIX}popup=fail]`
-      : `[${this.localOptions.ATTRIBUTE_PREFIX}popup=success]`
+  showPopup(isSuccess = true) {
+    const selector = (isSuccess) 
+      ? `[${this.localOptions.ATTRIBUTE_PREFIX}popup=success]`
+      : `[${this.localOptions.ATTRIBUTE_PREFIX}popup=fail]`
     ;
     const popupEl = document.querySelector(selector);
     if (popupEl) {
