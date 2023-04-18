@@ -16,6 +16,7 @@ class WebflowMagic_ShareLinks {
     LINK_CLASS_FACEBOOK: 'facebook',
     LINK_CLASS_LINKEDIN: 'linkedin',
     LINK_CLASS_TWITTER: 'twitter',
+    LINK_CLASS_REDDIT: 'reddit',
   }
 
 
@@ -42,6 +43,7 @@ class WebflowMagic_ShareLinks {
     const searchParams = new URLSearchParams(location.search);
     const utmStaticEntries = Object.entries(this.localOptions.UTM_STATIC_DATA);
     const destinationType = this.getDestinationType(linkEl);
+    const postTitle = this.getPostTitle(linkEl) ?? '';
     
     if (this.localOptions.ADD_UTM) {
       utmStaticEntries.forEach(([param, value]) => {
@@ -56,7 +58,7 @@ class WebflowMagic_ShareLinks {
       e.preventDefault();
       this.copyTextToClipboard(url.toString());
     });
-    const urlString = this.generateShareLink(destinationType, url.toString())
+    const urlString = this.generateShareLink(destinationType, url.toString(), postTitle)
 
     if (urlString) {
       this.setlinkUrl(linkEl, urlString);
@@ -75,13 +77,19 @@ class WebflowMagic_ShareLinks {
     if (classList.contains(this.localOptions.LINK_CLASS_FACEBOOK)) return 'facebook';
     if (classList.contains(this.localOptions.LINK_CLASS_LINKEDIN)) return 'linkedin';
     if (classList.contains(this.localOptions.LINK_CLASS_TWITTER)) return 'twitter';
+    if (classList.contains(this.localOptions.LINK_CLASS_REDDIT)) return 'reddit';
+  }
+  getPostTitle(linkEl) {
+    const title = linkEl.getAttribute(`${this.localOptions.ATTRIBUTE_PREFIX}title`);
+    return title;
   }
   generateShareLink(destinationType, url, text='') {
     switch (destinationType) {
       case 'clipboard': return 'javascript:;';
-      case 'facebook': return `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-      case 'linkedin': return `https://www.linkedin.com/shareArticle?mini=true&url=${url}`;
-      case 'twitter': return `https://twitter.com/intent/tweet?url=${url}&text=${text}`;
+      case 'facebook': return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+      case 'linkedin': return `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(url)}`;
+      case 'twitter': return `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+      case 'reddit': return `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`;
       default: 
         console.error(`There is no rule for link generation defined for target '${destinationType}'`, linkEl);
         return;
