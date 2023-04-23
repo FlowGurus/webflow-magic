@@ -19,27 +19,35 @@ class WebflowMagic_TextStorage {
   }
 
   mount() {
-    this.storageData = JSON.parse(localStorage.getItem(this.localOptions.ATTRIBUTE_NAME));
-    if (this.storageData == null) this.storageData = {};
-
+    this.getStorageData();
 
     document.querySelectorAll(`[${this.localOptions.ATTRIBUTE_NAME}]`).forEach(element => {
-      const storageKey = element.getAttribute('magic-textstorage');
+      const storageKey = element.getAttribute(this.localOptions.ATTRIBUTE_NAME);
       const storedValue = this.storageData[storageKey];
+      const placeholderValue = element.getAttribute(`${this.localOptions.ATTRIBUTE_NAME}-placeholder`);
 
       if (storedValue) this.setValues(storageKey, storedValue);
+      else if (placeholderValue) this.setValues(storageKey, placeholderValue);
 
       if (this.isElementEditableTextField(element)) {
         element.addEventListener('keyup', (event) => {
-          const element = event.target;
-          const key = element.getAttribute('magic-textstorage');
-          const value = element.value;
+          const key = event.target.getAttribute(this.localOptions.ATTRIBUTE_NAME);
+          let value = event.target.value;
+          if (!value && placeholderValue) {
+            value = placeholderValue;
+            event.target.value = placeholderValue;
+          }
           if (this.setStorageValue(key, value)) {
             this.setValues(key, value);
           }
         });
       }
     });
+  }
+  
+  getStorageData() {
+    this.storageData = JSON.parse(localStorage.getItem(this.localOptions.ATTRIBUTE_NAME));
+    if (this.storageData == null) this.storageData = {};
   }
 
   setValues(key, value) {
@@ -53,6 +61,7 @@ class WebflowMagic_TextStorage {
   }
   
   setStorageValue(key, value) {
+    this.getStorageData();
     if (key && this.storageData[key] !== value) {
       this.storageData[key] = value;
       localStorage.setItem(this.localOptions.ATTRIBUTE_NAME, JSON.stringify(this.storageData));
