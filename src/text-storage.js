@@ -3,8 +3,13 @@ class WebflowMagic_TextStorage {
   defaultOptions = {
     ATTRIBUTE_NAME: 'magic-textstorage',
     INPUT_TYPES: ['text', 'password', 'number', 'email', 'tel', 'url', 'search', 'date', 'datetime', 'datetime-local', 'time', 'month', 'week'],
+    VALUE_FILTERS: {},
   }
   storageData = null
+  valueFilters = {
+    'first-name': (value) => typeof value === 'string' ? value.split(' ')[0] : null,
+    'last-name': (value) => typeof value === 'string' ? value.split(' ').pop() : null, 
+  }
 
   constructor(options) {
     if (options && typeof options === 'object') {
@@ -15,6 +20,14 @@ class WebflowMagic_TextStorage {
       this.localOptions = { ...this.defaultOptions };
     }
 
+    for (const fnName in this.localOptions.VALUE_FILTERS) {
+      if (typeof this.localOptions.VALUE_FILTERS[fnName] !== 'function') {
+        console.error(`VALUE_FILTERS['${fnName}'] is not a function.`);
+        return;
+      }
+      this.valueFilters[fnName] = this.localOptions.VALUE_FILTERS[fnName];
+    }
+    
     this.mount();
   }
 
@@ -52,10 +65,15 @@ class WebflowMagic_TextStorage {
 
   setValues(key, value) {
     document.querySelectorAll(`[${this.localOptions.ATTRIBUTE_NAME}=${key}]`).forEach(element => {
+      const filterFnName = element.getAttribute(`${this.localOptions.ATTRIBUTE_NAME}-filter`);
+      const filterFn = this.valueFilters[filterFnName];
+      if (filterFnName && filterFn == null) console.error(`Filter function '${filterFnName}' does not exists`);
+
       if (this.isElementEditableTextField(element)) {
         element.value = value;
+        if (filterFn != null) console.error(`Text filter functions (${this.localOptions.ATTRIBUTE_NAME}-filter="${filterFnName}") can only be aplied to non-editable elements.`);
       } else {
-        element.textContent = value;
+        element.textContent = (filterFn != null) ? filterFn(value) : value;
       }
     });
   }
