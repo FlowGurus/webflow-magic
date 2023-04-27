@@ -34,28 +34,63 @@ class WebflowMagic_TextStorage {
   mount() {
     this.getStorageData();
 
+    const processElement = (element) => {
+      const key = element.getAttribute(this.localOptions.ATTRIBUTE_NAME);
+      let value = element.value;
+      const placeholderValue = element.getAttribute(`${this.localOptions.ATTRIBUTE_NAME}-placeholder`);
+      if (!value && placeholderValue) {
+        value = placeholderValue;
+        element.value = placeholderValue;
+      }
+      if (key && this.setStorageValue(key, value)) {
+        this.setElementsValues(key, value);
+      }
+    }
+
+    const textFieldUpdateHandler = (event) => {
+      processElement(event.target);
+    }
+
     document.querySelectorAll(`[${this.localOptions.ATTRIBUTE_NAME}]`).forEach(element => {
       const storageKey = element.getAttribute(this.localOptions.ATTRIBUTE_NAME);
       const storedValue = this.storageData[storageKey];
-      const placeholderValue = element.getAttribute(`${this.localOptions.ATTRIBUTE_NAME}-placeholder`);
 
-      if (storedValue) this.setValues(storageKey, storedValue);
-      else if (placeholderValue) this.setValues(storageKey, placeholderValue);
+      if (storedValue) this.setElementsValues(storageKey, storedValue);
 
       if (this.isElementEditableTextField(element)) {
-        element.addEventListener('keyup', (event) => {
-          const key = event.target.getAttribute(this.localOptions.ATTRIBUTE_NAME);
-          let value = event.target.value;
-          if (!value && placeholderValue) {
-            value = placeholderValue;
-            event.target.value = placeholderValue;
-          }
-          if (this.setStorageValue(key, value)) {
-            this.setValues(key, value);
-          }
-        });
+        element.addEventListener('keyup', textFieldUpdateHandler);
       }
     });
+
+    document.querySelectorAll(`[${this.localOptions.ATTRIBUTE_NAME}-placeholder]`).forEach(element => {
+      const storageKey = element.getAttribute(this.localOptions.ATTRIBUTE_NAME);
+
+      if (storageKey) return;
+      
+      const placeholderValue = element.getAttribute(`${this.localOptions.ATTRIBUTE_NAME}-placeholder`);
+      this.setElementValue(element, placeholderValue);
+
+      if (this.isElementEditableTextField(element)) {
+        element.addEventListener('keyup', textFieldUpdateHandler);
+        this.overrideElementValueChange(element, (value) => {
+          if (value) return;
+          this.setElementValue(element, placeholderValue);
+        });
+      
+      }
+    });
+  }
+
+  overrideElementValueChange(element, handler) {
+    const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+    Object.defineProperty(element, "value", {
+      get: desc.get,
+      set: function(v) {
+        desc.set.call(this, v);
+        handler(v);
+      }
+    });
+
   }
   
   getStorageData() {
@@ -63,18 +98,22 @@ class WebflowMagic_TextStorage {
     if (this.storageData == null) this.storageData = {};
   }
 
-  setValues(key, value) {
+  setElementValue(element, value) {
+    const filterFnName = element.getAttribute(`${this.localOptions.ATTRIBUTE_NAME}-filter`);
+    const filterFn = this.valueFilters[filterFnName];
+    if (filterFnName && filterFn == null) console.error(`Filter function '${filterFnName}' does not exists`);
+    
+    if (this.isElementEditableTextField(element)) {
+      element.value = value;
+      if (filterFn != null) console.error(`Text filter functions (${this.localOptions.ATTRIBUTE_NAME}-filter="${filterFnName}") can only be aplied to non-editable elements.`);
+    } else {
+      element.textContent = (filterFn != null) ? filterFn(value) : value;
+    }
+  }
+  
+  setElementsValues(key, value) {
     document.querySelectorAll(`[${this.localOptions.ATTRIBUTE_NAME}=${key}]`).forEach(element => {
-      const filterFnName = element.getAttribute(`${this.localOptions.ATTRIBUTE_NAME}-filter`);
-      const filterFn = this.valueFilters[filterFnName];
-      if (filterFnName && filterFn == null) console.error(`Filter function '${filterFnName}' does not exists`);
-
-      if (this.isElementEditableTextField(element)) {
-        element.value = value;
-        if (filterFn != null) console.error(`Text filter functions (${this.localOptions.ATTRIBUTE_NAME}-filter="${filterFnName}") can only be aplied to non-editable elements.`);
-      } else {
-        element.textContent = (filterFn != null) ? filterFn(value) : value;
-      }
+      this.setElementValue(element, value);
     });
   }
   
