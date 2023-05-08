@@ -91,7 +91,7 @@ class WebflowMagic_ShareLinks {
       case 'twitter': return `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
       case 'reddit': return `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`;
       default: 
-        console.error(`There is no rule for link generation defined for target '${destinationType}'`, linkEl);
+        console.error(`There is no rule for link generation defined for target '${destinationType}'`, url);
         return;
     }
   }
